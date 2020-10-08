@@ -55,8 +55,10 @@ void VisualScriptNode::set_default_input_value(int p_port, const Variant &p_valu
 	default_input_values[p_port] = p_value;
 
 #ifdef TOOLS_ENABLED
-	if (script_used.is_valid())
+	if (script_used.is_valid()) {
 		script_used->set_edited(true);
+	}
+
 #endif
 }
 
@@ -162,7 +164,7 @@ VisualScriptNodeInstance::~VisualScriptNodeInstance() {
 	}
 }
 
-void VisualScript::add_function(const StringName &p_name, int func_node_id) {
+void VisualScript::add_function(const StringName &p_name, int p_func_node_id) {
 	ERR_FAIL_COND(instances.size());
 	ERR_FAIL_COND(!String(p_name).is_valid_identifier());
 	ERR_FAIL_COND(functions.has(p_name));
@@ -170,7 +172,7 @@ void VisualScript::add_function(const StringName &p_name, int func_node_id) {
 	ERR_FAIL_COND(custom_signals.has(p_name));
 
 	functions[p_name] = Function();
-	functions[p_name].func_id = func_node_id;
+	functions[p_name].func_id = p_func_node_id;
 }
 
 bool VisualScript::has_function(const StringName &p_name) const {
@@ -181,7 +183,7 @@ void VisualScript::remove_function(const StringName &p_name) {
 	ERR_FAIL_COND(instances.size());
 	ERR_FAIL_COND(!functions.has(p_name));
 
-	// let the editor handle the node removal
+	// Let the editor handle the node removal.
 	functions.erase(p_name);
 }
 
@@ -226,7 +228,7 @@ void VisualScript::_node_ports_changed(int p_id) {
 
 	vsn->validate_input_default_values();
 
-	//must revalidate all the functions
+	// must revalidate all the functions
 
 	{
 		List<SequenceConnection> to_remove;
@@ -272,7 +274,7 @@ void VisualScript::_node_ports_changed(int p_id) {
 
 void VisualScript::add_node(int p_id, const Ref<VisualScriptNode> &p_node, const Point2 &p_pos) {
 	ERR_FAIL_COND(instances.size());
-	ERR_FAIL_COND(nodes.has(p_id)); //id can exist only one in script
+	ERR_FAIL_COND(nodes.has(p_id)); //ID can exist only one in script
 
 	NodeData nd;
 	nd.node = p_node;
@@ -711,7 +713,6 @@ void VisualScript::get_custom_signal_list(List<StringName> *r_custom_signals) co
 }
 
 int VisualScript::get_available_id() const {
-	// TODO: Maybe add a class instance counter here to get the available id??
 	List<int> nds;
 	nodes.get_key_list(&nds);
 	int max = -1;
@@ -753,8 +754,9 @@ void VisualScript::_update_placeholders() {
 	variables.get_key_list(&keys);
 
 	for (List<StringName>::Element *E = keys.front(); E; E = E->next()) {
-		if (!variables[E->get()]._export)
+		if (!variables[E->get()]._export) {
 			continue;
+		}
 
 		PropertyInfo p = variables[E->get()].info;
 		p.name = String(E->get());
@@ -783,8 +785,9 @@ ScriptInstance *VisualScript::instance_create(Object *p_this) {
 		variables.get_key_list(&keys);
 
 		for (const List<StringName>::Element *E = keys.front(); E; E = E->next()) {
-			if (!variables[E->get()]._export)
+			if (!variables[E->get()]._export) {
 				continue;
+			}
 
 			PropertyInfo p = variables[E->get()].info;
 			p.name = String(E->get());
@@ -897,8 +900,9 @@ bool VisualScript::has_method(const StringName &p_method) const {
 
 MethodInfo VisualScript::get_method_info(const StringName &p_method) const {
 	const Function funct = functions[p_method];
-	if (funct.func_id == -1)
+	if (funct.func_id == -1) {
 		return MethodInfo();
+	}
 
 	MethodInfo mi;
 	mi.name = p_method;
@@ -926,8 +930,6 @@ void VisualScript::get_script_property_list(List<PropertyInfo> *p_list) const {
 	get_variable_list(&vars);
 
 	for (List<StringName>::Element *E = vars.front(); E; E = E->next()) {
-		//if (!variables[E->get()]._export)
-		//	continue;
 		PropertyInfo pi = variables[E->get()].info;
 		pi.usage |= PROPERTY_USAGE_SCRIPT_VARIABLE;
 		p_list->push_back(pi);
@@ -1283,8 +1285,9 @@ void VisualScriptInstance::get_property_list(List<PropertyInfo> *p_properties) c
 	List<StringName> vars;
 	script->variables.get_key_list(&vars);
 	for (const List<StringName>::Element *E = vars.front(); E; E = E->next()) {
-		if (!script->variables[E->get()]._export)
+		if (!script->variables[E->get()]._export) {
 			continue;
+		}
 		PropertyInfo p = script->variables[E->get()].info;
 		p.name = String(E->get());
 		p.usage |= PROPERTY_USAGE_SCRIPT_VARIABLE;
