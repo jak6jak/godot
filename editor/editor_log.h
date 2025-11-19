@@ -31,6 +31,7 @@
 #pragma once
 
 #include "core/os/thread.h"
+#include "core/string/ustring.h"
 #include "scene/gui/box_container.h"
 #include "scene/gui/button.h"
 #include "scene/gui/line_edit.h"
@@ -53,16 +54,27 @@ public:
 private:
 	struct LogMessage {
 		String text;
+		String origin;
 		MessageType type;
 		int count = 1;
 		bool clear = true;
 
 		LogMessage() {}
 
+		LogMessage(const String &p_text, MessageType p_type, const String &p_origin, bool p_clear) :
+				text(p_text),
+				origin(p_origin),
+				type(p_type),
+				clear(p_clear)
+				 {
+		}
+
 		LogMessage(const String &p_text, MessageType p_type, bool p_clear) :
 				text(p_text),
+				origin(""),
 				type(p_type),
-				clear(p_clear) {
+				clear(p_clear)
+				 {
 		}
 	};
 
@@ -163,7 +175,9 @@ private:
 	void _set_search_visible(bool p_visible);
 	void _search_changed(const String &p_text);
 
-	void _process_message(const String &p_msg, MessageType p_type, bool p_clear);
+	void _process_message(const String &p_msg, MessageType p_type,bool p_clear);
+	void _add_message_with_origin(const String &p_msg, MessageType p_type, const String &p_origin);
+	void _process_message_with_origin(const String &p_msg, MessageType p_type, const String &p_origin, bool p_clear);
 	void _reset_message_counts();
 
 	void _set_collapse(bool p_collapse);

@@ -54,9 +54,10 @@ void EditorLog::_error_handler(void *p_self, const char *p_func, const char *p_f
 	MessageType message_type = p_type == ERR_HANDLER_WARNING ? MSG_TYPE_WARNING : MSG_TYPE_ERROR;
 
 	if (!Thread::is_main_thread()) {
-		MessageQueue::get_main_singleton()->push_callable(callable_mp(self, &EditorLog::add_message), err_str, message_type);
+		MessageQueue::get_main_singleton()->push_callable(callable_mp(self, &::EditorLog::_add_message_with_origin), p_error, message_type,String::utf8(p_file) + ":" + itos(p_line) );
 	} else {
-		self->add_message(err_str, message_type);
+		
+		self->_add_message_with_origin(p_error, message_type, String::utf8(p_file) + ":" + itos(p_line));
 	}
 }
 
@@ -240,6 +241,41 @@ void EditorLog::_process_message(const String &p_msg, MessageType p_type, bool p
 	type_filter_map[p_type]->set_message_count(type_filter_map[p_type]->get_message_count() + 1);
 }
 
+void EditorLog::_add_message_with_origin(const String &p_msg, MessageType p_type, const String &p_origin) {
+	if (p_origin.is_empty() || !p_origin.is_resource_file()) {
+		Vector<String> lines = p_msg.split("\n", true);
+		int line_count = lines.size();
+
+		for (int i = 0; i < line_count; i++) {
+			_process_message(lines[i], p_type, i == line_count - 1);
+		}
+	} else {
+		Vector<String> lines = p_msg.split("\n", true);
+		int line_count = lines.size();
+
+		for (int i = 0; i < line_count; i++) {
+			_process_message_with_origin(lines[i], p_type,p_origin, i == line_count - 1);
+		}
+	}
+}
+
+void EditorLog::_process_message_with_origin(const String &p_msg, MessageType p_type, const String &p_origin, bool p_clear) {
+	if (messages.size() > 0 && messages[messages.size() - 1].text == p_msg && messages[messages.size() - 1].type == p_type
+			&& messages[messages.size() - 1].origin == p_origin) {
+		// If previous message is the same as the new one, increase previous count rather than adding another
+		// instance to the messages list.
+		LogMessage &previous = messages.write[messages.size() - 1];
+		previous.count++;
+
+		_add_log_line(previous, collapse);
+	} else {
+		// Different message to the previous one received.
+		LogMessage message(p_msg, p_type, p_origin,p_clear);
+		_add_log_line(message);
+		messages.push_back(message);
+	}
+}
+
 void EditorLog::add_message(const String &p_msg, MessageType p_type) {
 	// Make text split by new lines their own message.
 	// See #41321 for reasoning. At time of writing, multiple print()'s in running projects
@@ -387,7 +423,14 @@ void EditorLog::_add_log_line(LogMessage &p_message, bool p_replace_previous) {
 	if (p_message.type == MSG_TYPE_STD_RICH) {
 		log->append_text(p_message.text);
 	} else {
-		log->add_text(p_message.text);
+		if(p_message.origin.is_empty()) {
+			log->add_text(p_message.text);
+		}else{
+			log->push_meta(p_message.origin);
+			log->add_text( p_message.origin);
+			log->pop();
+			log->add_text(+" - " + p_message.text);
+		}
 	}
 	if (p_message.clear || p_message.type != MSG_TYPE_STD_RICH) {
 		log->pop_all(); // Pop all unclosed tags.
