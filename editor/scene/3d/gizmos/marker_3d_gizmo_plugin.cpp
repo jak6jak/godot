@@ -33,6 +33,7 @@
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
 #include "scene/3d/marker_3d.h"
+#include "scene/resources/texture.h"
 
 Marker3DGizmoPlugin::Marker3DGizmoPlugin() {
 	pos3d_mesh.instantiate();
@@ -108,10 +109,18 @@ int Marker3DGizmoPlugin::get_priority() const {
 void Marker3DGizmoPlugin::redraw(EditorNode3DGizmo *p_gizmo) {
 	const Marker3D *marker = Object::cast_to<Marker3D>(p_gizmo->get_node_3d());
 	const real_t extents = marker->get_gizmo_extents();
-	const Transform3D xform(Basis::from_scale(Vector3(extents, extents, extents)));
 
 	p_gizmo->clear();
-	p_gizmo->add_mesh(pos3d_mesh, Ref<Material>(), xform);
+
+	Ref<Texture2D> tex = marker->get_gizmo_texture();
+	if (tex.is_valid()) {
+		String name = "marker_custom_" + itos(tex->get_instance_id());
+		create_icon_material(name, tex);
+		p_gizmo->add_unscaled_billboard(get_material(name, p_gizmo), extents);
+	} else {
+		const Transform3D xform(Basis::from_scale(Vector3(extents, extents, extents)));
+		p_gizmo->add_mesh(pos3d_mesh, Ref<Material>(), xform);
+	}
 
 	const Vector<Vector3> points = {
 		Vector3(-extents, 0, 0),
