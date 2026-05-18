@@ -114,9 +114,9 @@ void Marker3DGizmoPlugin::redraw(EditorNode3DGizmo *p_gizmo) {
 
 	Ref<Texture2D> tex = marker->get_gizmo_texture();
 	if (tex.is_valid()) {
-		String name = "marker_custom_" + itos(tex->get_instance_id());
-		create_icon_material(name, tex);
-		p_gizmo->add_unscaled_billboard(get_material(name, p_gizmo), extents);
+		String icon_name = "marker_custom_" + itos(tex->get_instance_id());
+		create_icon_material(icon_name, tex);
+		p_gizmo->add_unscaled_billboard(get_material(icon_name, p_gizmo), extents);
 	} else {
 		const Transform3D xform(Basis::from_scale(Vector3(extents, extents, extents)));
 		p_gizmo->add_mesh(pos3d_mesh, Ref<Material>(), xform);
