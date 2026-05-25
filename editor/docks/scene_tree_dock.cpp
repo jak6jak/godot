@@ -3179,6 +3179,9 @@ void SceneTreeDock::_create() {
 					if (only_one_top_node && top_node->get_parent() != n->get_parent()) {
 						only_one_top_node = false;
 					}
+					if (only_one_top_node && n->get_index(false) < top_node->get_index(false)) {
+						top_node = n;
+					}
 					if (center_parent) {
 						top_level_nodes.append(n);
 					}
@@ -4137,7 +4140,7 @@ void SceneTreeDock::_tree_rmb(const Vector2 &p_menu_pos) {
 	END_SECTION()
 
 #undef BEGIN_SECTION
-#undef END_SECTIOn
+#undef END_SECTION
 
 	Vector<String> p_paths;
 	Node *root = EditorNode::get_singleton()->get_edited_scene();
